@@ -1,15 +1,17 @@
 package ru.aston.service;
 
-import org.springframework.stereotype.Service;
 import ru.aston.dao.CommentDao;
 import ru.aston.dto.CommentDto.CommentDto;
 import ru.aston.dto.CommentDto.CommentShortDto;
 
 import java.util.List;
 
-@Service
 public class CommentService {
-    private CommentDao commentDao;
+    private final CommentDao commentDao;
+
+    public CommentService() {
+        this.commentDao = new CommentDao();
+    }
 
     public CommentService(CommentDao commentDao) {
         this.commentDao = commentDao;
@@ -19,7 +21,7 @@ public class CommentService {
         commentDao.deleteComment(commentId);
     }
 
-    public CommentShortDto postComment(CommentShortDto commentShortDto) {
+    public CommentShortDto createComment(CommentShortDto commentShortDto) {
         return commentDao.postComment(commentShortDto);
     }
 

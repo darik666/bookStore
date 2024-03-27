@@ -1,18 +1,18 @@
 package ru.aston.dao;
 
-import org.springframework.stereotype.Service;
 import ru.aston.dto.BookDto.BookDto;
 import ru.aston.dto.CommentDto.CommentDto;
 import ru.aston.dto.CommentDto.CommentShortDto;
 import ru.aston.dto.UserDto.UserDto;
 import ru.aston.util.ConnectionManager;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
 public class CommentDao {
+    private final DataSource dataSource;
     private final String getAllCommentsQuery = "SELECT c.comment_id, c.user_id, c.book_id, " +
             "c.text, u.user_name, b.book_title " +
             "FROM comments c " +
@@ -29,9 +29,17 @@ public class CommentDao {
     private final String deleteCommentQuery = "DELETE FROM comments " +
             "WHERE comment_id = ? ";
 
+    public CommentDao() {
+        this.dataSource = ConnectionManager.getDataSource();
+    }
+
+    public CommentDao(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
     public List<CommentDto> getAllComments() {
         List<CommentDto> comments = new ArrayList<>();
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(getAllCommentsQuery);
              ResultSet resultSet = preparedStatement.executeQuery()) {
             while (resultSet.next()) {
@@ -59,7 +67,7 @@ public class CommentDao {
 
     public CommentDto getCommentById(int commentId) {
         CommentDto comment = null;
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(getCommentByIdQuery)) {
             preparedStatement.setInt(1, commentId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -86,7 +94,7 @@ public class CommentDao {
     }
 
     public CommentShortDto postComment(CommentShortDto commentShortDto) {
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement =
                      connection.prepareStatement(postCommentQuery, Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setInt(1, commentShortDto.getUserId());
@@ -111,7 +119,7 @@ public class CommentDao {
     }
 
     public void deleteComment(int commentId) {
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(deleteCommentQuery)) {
             preparedStatement.setInt(1, commentId);
             int rowsAffected = preparedStatement.executeUpdate();

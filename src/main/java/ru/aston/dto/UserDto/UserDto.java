@@ -1,14 +1,10 @@
 package ru.aston.dto.UserDto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.aston.dto.BookDto.BookDto;
 import ru.aston.dto.CommentDto.CommentDto;
-import ru.aston.model.Book.Book;
-import ru.aston.model.Comment.Comment;
 
 import java.util.List;
 

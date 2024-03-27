@@ -1,14 +1,19 @@
 package ru.aston.dto.AuthorDto;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
 public class AuthorDtoShort {
     private String authorName;
+
+    @JsonCreator
+    public AuthorDtoShort(@JsonProperty("authorName") String authorName) {
+        this.authorName = authorName;
+    }
 
     public String getAuthorName() {
         return authorName;

@@ -1,19 +1,19 @@
 package ru.aston.dao;
 
-import org.springframework.stereotype.Service;
 import ru.aston.dto.AuthorDto.AuthorDto;
 import ru.aston.dto.AuthorDto.AuthorDtoShort;
 import ru.aston.dto.BookDto.BookDto;
 import ru.aston.util.ConnectionManager;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Service
 public class AuthorDao {
+    private final DataSource dataSource;
     private final String createAuthorQuery = "INSERT INTO authors (author_name) VALUES(?)";
     private final String deleteAuthorQuery = "DELETE FROM authors WHERE author_id = ?";
     private final String getAllAuthorsQuery = "SELECT a.author_id, a.author_name, b.book_id, b.book_title " +
@@ -24,8 +24,16 @@ public class AuthorDao {
             "LEFT JOIN books b ON a.author_id = b.author_id " +
             "WHERE a.author_id = ?";
 
+    public AuthorDao() {
+        this.dataSource = ConnectionManager.getDataSource();
+    }
+
+    public AuthorDao(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
     public AuthorDto createAuthor(AuthorDtoShort authorDtoShort) {
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement =
                      connection.prepareStatement(createAuthorQuery, Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setString(1, authorDtoShort.getAuthorName());
@@ -53,7 +61,7 @@ public class AuthorDao {
     public List<AuthorDto> getAllAuthors() {
         Map<Integer, AuthorDto> mapAuthor = new HashMap<>();
 
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(getAllAuthorsQuery);
              ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -94,7 +102,7 @@ public class AuthorDao {
 
     public AuthorDto getAuthorById(int authorId) {
         AuthorDto authorDto = null;
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(getAuthorById)) {
             preparedStatement.setInt(1, authorId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -117,7 +125,7 @@ public class AuthorDao {
     }
 
     public void deleteAuthor(int authorId) {
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(deleteAuthorQuery)) {
             preparedStatement.setInt(1, authorId);
             int rowsAffected = preparedStatement.executeUpdate();

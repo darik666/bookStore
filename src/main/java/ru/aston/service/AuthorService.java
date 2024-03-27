@@ -1,15 +1,17 @@
 package ru.aston.service;
 
-import org.springframework.stereotype.Service;
 import ru.aston.dao.AuthorDao;
 import ru.aston.dto.AuthorDto.AuthorDto;
 import ru.aston.dto.AuthorDto.AuthorDtoShort;
 
 import java.util.List;
 
-@Service
 public class AuthorService {
-    private AuthorDao authorDao;
+    private final AuthorDao authorDao;
+
+    public AuthorService() {
+        this.authorDao = new AuthorDao();
+    }
 
     public AuthorService(AuthorDao authorDao) {
         this.authorDao = authorDao;
@@ -22,7 +24,7 @@ public class AuthorService {
         return authorDao.getAllAuthors();
     }
 
-    public AuthorDto createUser(AuthorDtoShort authorDtoShort) {
+    public AuthorDto createAuthor(AuthorDtoShort authorDtoShort) {
         return authorDao.createAuthor(authorDtoShort);
     }
 

@@ -2,29 +2,24 @@ package ru.aston.dto.UserDto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import ru.aston.dto.BookDto.BookDto;
-import ru.aston.dto.CommentDto.CommentDto;
-
-import java.util.List;
 
 @Getter
 @Setter
 public class UserDtoShort {
-    private String userName;
+    private String name;
 
     @JsonCreator
-    public UserDtoShort(@JsonProperty("name")String userName) {
-        this.userName = userName;
+    public UserDtoShort(@JsonProperty("name") String name) {
+        this.name = name;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getName() {
+        return name;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setName(String name) {
+        this.name = name;
     }
 }

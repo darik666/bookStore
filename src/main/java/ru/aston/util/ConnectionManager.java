@@ -1,21 +1,37 @@
 package ru.aston.util;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import org.apache.commons.dbcp2.BasicDataSource;
+
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 public class ConnectionManager {
-    private static final String JDBC_URL = "jdbc:postgresql://localhost:5432/bookstore-db";
-    private static final String JDBC_USERNAME = "postgres";
-    private static final String JDBC_PASSWORD = "password";
+    private static final String PROPERTIES_FILE = "db.properties";
 
-    public static Connection getConnection() {
-        Connection connection = null;
-        try {
-            connection = DriverManager.getConnection(JDBC_URL, JDBC_USERNAME, JDBC_PASSWORD);
-        } catch (SQLException e) {
-            System.err.println("Error connecting to database: " + e.getMessage());
+    public static DataSource getDataSource() {
+        BasicDataSource dataSource = new BasicDataSource();
+        Properties properties = new Properties();
+
+        try (InputStream inputStream = ConnectionManager.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE)) {
+            if (inputStream == null) {
+                throw new IOException("Properties file '" + PROPERTIES_FILE + "' not found");
+            }
+            properties.load(inputStream);
+        } catch (IOException e) {
+            System.err.println("Error loading properties file: " + e.getMessage());
         }
-        return connection;
+
+        String jdbcUrl = properties.getProperty("jdbc.url");
+        String username = properties.getProperty("jdbc.username");
+        String password = properties.getProperty("jdbc.password");
+
+        dataSource.setUrl(jdbcUrl);
+        dataSource.setUsername(username);
+        dataSource.setPassword(password);
+        dataSource.setDriverClassName("org.postgresql.Driver"); // Set the JDBC driver class name
+
+        return dataSource;
     }
 }

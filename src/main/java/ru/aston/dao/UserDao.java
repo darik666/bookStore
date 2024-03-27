@@ -1,17 +1,12 @@
 package ru.aston.dao;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import ru.aston.dto.BookDto.BookDto;
 import ru.aston.dto.CommentDto.CommentDto;
 import ru.aston.dto.UserDto.UserDto;
 import ru.aston.dto.UserDto.UserDtoShort;
-import ru.aston.model.Author.Author;
-import ru.aston.model.Book.Book;
-import ru.aston.model.Comment.Comment;
-import ru.aston.model.User.User;
 import ru.aston.util.ConnectionManager;
+
+import javax.sql.DataSource;
 import java.sql.ResultSet;
 
 import java.sql.Connection;
@@ -23,8 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
 public class UserDao {
+    private final DataSource dataSource;
     private final String postUserQuery = "INSERT INTO users (user_name) VALUES(?)";
     private final String deleteUserQuery = "DELETE FROM users WHERE user_id = ?";
     private final String getUserByIdQuery = "SELECT u.user_id, u.user_name, " +
@@ -42,12 +37,20 @@ public class UserDao {
             "LEFT JOIN comments c ON u.user_id = c.user_id " +
             "LEFT JOIN books b ON c.book_id = b.book_id";
 
+    public UserDao(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    public UserDao() {
+        this.dataSource = ConnectionManager.getDataSource();
+    }
+
     public UserDto getUserById(int userId) {
         UserDto user = null;
         List<CommentDto> comments = new ArrayList<>();
         List<BookDto> reviewedBooks = new ArrayList<>();
 
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(getUserByIdQuery)) {
             preparedStatement.setInt(1, userId); // Set the user ID parameter
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -84,7 +87,7 @@ public class UserDao {
 
     public List<UserDto> getAllUsers() {
         Map<Integer, UserDto> userMap;
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(getAllUsersQuery);
              ResultSet resultSet = preparedStatement.executeQuery()) {
             userMap = new HashMap<>();
@@ -127,8 +130,8 @@ public class UserDao {
     }
 
     public void deleteUser(int userId) {
-        try (Connection connection = ConnectionManager.getConnection();
-        PreparedStatement preparedStatement = connection.prepareStatement(deleteUserQuery)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(deleteUserQuery)) {
             preparedStatement.setInt(1, userId);
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected == 0) {
@@ -140,10 +143,10 @@ public class UserDao {
     }
 
     public UserDto postUser(UserDtoShort userDtoShort) {
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement =
                      connection.prepareStatement(postUserQuery, Statement.RETURN_GENERATED_KEYS)) {
-            preparedStatement.setString(1, userDtoShort.getUserName());
+            preparedStatement.setString(1, userDtoShort.getName());
             int rowsAffected = preparedStatement.executeUpdate();
 
             if (rowsAffected > 0) {
@@ -151,7 +154,7 @@ public class UserDao {
                     if (generatedKeys.next()) {
                         int generatedId = generatedKeys.getInt(1);
                         UserDto user = new UserDto();
-                        user.setUserName(userDtoShort.getUserName());
+                        user.setUserName(userDtoShort.getName());
                         user.setUserId(generatedId);
                         return user;
                     } else {
@@ -165,7 +168,4 @@ public class UserDao {
         }
         return null;
     }
-
-
-
 }

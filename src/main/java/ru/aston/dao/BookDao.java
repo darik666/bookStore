@@ -1,6 +1,5 @@
 package ru.aston.dao;
 
-import org.springframework.stereotype.Service;
 import ru.aston.dto.AuthorDto.AuthorDto;
 import ru.aston.dto.BookDto.BookDto;
 import ru.aston.dto.BookDto.BookShortDto;
@@ -8,12 +7,13 @@ import ru.aston.dto.CommentDto.CommentDto;
 import ru.aston.dto.UserDto.UserDto;
 import ru.aston.util.ConnectionManager;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
 public class BookDao {
+    private final DataSource dataSource;
     private final String createBookQuery = "INSERT INTO books (book_title, author_id) VALUES(?, ?)";
     private final String deleteBookQuery = "DELETE FROM books WHERE book_id = ?";
     private final String getBookByIdQuery = "SELECT b.book_id, b.book_title, a.author_id, a.author_name, " +
@@ -29,9 +29,17 @@ public class BookDao {
             "LEFT JOIN authors a ON b.author_id = a.author_id " +
             "LEFT JOIN comments c ON b.book_id = c.book_id ";
 
+    public BookDao() {
+        this.dataSource = ConnectionManager.getDataSource();
+    }
+
+    public BookDao(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
     public BookDto getBookById(int bookId) {
         BookDto bookDto = null;
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(getBookByIdQuery)) {
             preparedStatement.setInt(1, bookId);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -81,7 +89,7 @@ public class BookDao {
     public List<BookDto> getAllBooks() {
         List<BookDto> books = new ArrayList<>();
 
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(getAllBooksQuery);
              ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -139,7 +147,7 @@ public class BookDao {
     }
 
     public BookShortDto createBook(BookShortDto bookShortDto) {
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement =
                      connection.prepareStatement(createBookQuery, Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setString(1, bookShortDto.getBookTitle());
@@ -164,7 +172,7 @@ public class BookDao {
     }
 
     public void deleteBook(int bookId) {
-        try (Connection connection = ConnectionManager.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(deleteBookQuery)) {
             preparedStatement.setInt(1, bookId);
             int rowsAffected = preparedStatement.executeUpdate();
