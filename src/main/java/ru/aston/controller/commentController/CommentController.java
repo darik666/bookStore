@@ -2,33 +2,61 @@ package ru.aston.controller.commentController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import ru.aston.dao.CommentDao;
 import ru.aston.dto.CommentDto.CommentDto;
 import ru.aston.dto.CommentDto.CommentShortDto;
-import ru.aston.service.CommentService;
+import ru.aston.service.commentService.CommentServiceImpl;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.sql.DataSource;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @WebServlet("/comments/*")
 public class CommentController extends HttpServlet {
-    private final CommentService commentService;
+    private final CommentServiceImpl commentServiceImpl;
 
     public CommentController() {
-        this.commentService = new CommentService();
+        this.commentServiceImpl = new CommentServiceImpl();
     }
 
-    public CommentController(DataSource dataSource) {
-        this.commentService = new CommentService(new CommentDao(dataSource));
+    public CommentController(CommentServiceImpl commentServiceImpl) {
+        this.commentServiceImpl = commentServiceImpl;
     }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        Optional<CommentShortDto> commentShortDtoOptional = extractRequestBody(req);
+        if (commentShortDtoOptional.isPresent()) {
+            CommentShortDto commentShortDto = commentShortDtoOptional.get();
+            if (commentShortDto.getBookId() <= 0 || commentShortDto.getUserId() <= 0 ||
+            commentShortDto.getText() == null || commentShortDto.getText().isBlank()) {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                        "Comment must have non-empty comment text, positive bookId and userId");
+            } else {
+                CommentShortDto createdComment = commentServiceImpl.createComment(commentShortDto);
+                sendAsJson(resp, createdComment);
+            }
+        } else {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
+        }
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String pathInfo = req.getPathInfo();
+        if (pathInfo == null || !pathInfo.matches("/\\d+")) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
+            return;
+        }
+        int commentId = Integer.parseInt(pathInfo.substring(1));
+        commentServiceImpl.deleteComment(commentId);
+        resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+    }
+
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -45,13 +73,8 @@ public class CommentController extends HttpServlet {
         }
     }
 
-    private void getAllComments(HttpServletResponse resp) throws IOException {
-        List<CommentDto> comments = commentService.getAllComments();
-        sendAsJson(resp, comments);
-    }
-
     private void getCommentById(HttpServletResponse resp, int commentId) throws IOException {
-        CommentDto comment = commentService.getCommentById(commentId);
+        CommentDto comment = commentServiceImpl.getCommentById(commentId);
         if (comment != null) {
             sendAsJson(resp, comment);
         } else {
@@ -59,44 +82,18 @@ public class CommentController extends HttpServlet {
         }
     }
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String requestBody = extractRequestBody(req);
-        CommentShortDto commentShortDto = parseCommentShortDto(requestBody);
-        String commentText = commentShortDto.getText();
-        if (commentText == null || commentText.isBlank()) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                    "Comment must have a non-null and non-empty text");
-        } else {
-            CommentShortDto createdComment = commentService.createComment(commentShortDto);
-            sendAsJson(resp, createdComment);
-        }
+    private void getAllComments(HttpServletResponse resp) throws IOException {
+        List<CommentDto> comments = commentServiceImpl.getAllComments();
+        sendAsJson(resp, comments);
     }
 
-    @Override
-    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String pathInfo = req.getPathInfo();
-        if (pathInfo == null || !pathInfo.matches("/\\d+")) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
-            return;
-        }
-        int commentId = Integer.parseInt(pathInfo.substring(1));
-        commentService.deleteComment(commentId);
-        resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
-    }
-
-    private String extractRequestBody(HttpServletRequest req) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(req.getInputStream()))) {
-            return reader.lines().collect(Collectors.joining(System.lineSeparator()));
-        }
-    }
-
-    private CommentShortDto parseCommentShortDto(String requestBody) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            return mapper.readValue(requestBody, CommentShortDto.class);
+    private Optional<CommentShortDto> extractRequestBody(HttpServletRequest req) throws IOException {
+        try (BufferedReader reader = req.getReader()) {
+            ObjectMapper mapper = new ObjectMapper();
+            CommentShortDto commentShortDto = mapper.readValue(reader, CommentShortDto.class);
+            return Optional.of(commentShortDto);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Invalid request body", e);
+            return Optional.empty();
         }
     }
 

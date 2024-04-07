@@ -6,6 +6,7 @@ import lombok.Setter;
 import ru.aston.dto.BookDto.BookDto;
 import ru.aston.dto.CommentDto.CommentDto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -14,8 +15,8 @@ import java.util.List;
 public class UserDto {
     private int userId;
     private String userName;
-    private List<CommentDto> comments;
-    private List<BookDto> reviewedBooks;
+    private List<CommentDto> comments = new ArrayList<>();
+    private List<BookDto> reviewedBooks = new ArrayList<>();
 
     public int getUserId() {
         return userId;

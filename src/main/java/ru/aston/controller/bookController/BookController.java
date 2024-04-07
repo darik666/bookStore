@@ -2,31 +2,58 @@ package ru.aston.controller.bookController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import ru.aston.dao.BookDao;
 import ru.aston.dto.BookDto.BookDto;
 import ru.aston.dto.BookDto.BookShortDto;
-import ru.aston.service.BookService;
+import ru.aston.service.bookService.BookServiceImpl;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.sql.DataSource;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @WebServlet("/books/*")
 public class BookController extends HttpServlet {
-    private final BookService bookService; // Assuming you have a BookService to handle user-related operations
+    private final BookServiceImpl bookServiceImpl; // Assuming you have a BookService to handle user-related operations
 
     public BookController() {
-        this.bookService = new BookService();
+        this.bookServiceImpl = new BookServiceImpl();
     }
 
-    public BookController(DataSource dataSource) {
-        this.bookService = new BookService(new BookDao(dataSource)); // Initialize BookService according to your implementation
+    public BookController(BookServiceImpl bookServiceImpl) {
+        this.bookServiceImpl = bookServiceImpl; // Initialize BookService according to your implementation
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        Optional<BookShortDto> bookShortDtoOptional = extractRequestBody(req);
+        if (bookShortDtoOptional.isPresent()) {
+           BookShortDto bookShortDto = bookShortDtoOptional.get();
+           if (bookShortDto.getBookTitle() == null || bookShortDto.getBookTitle().isBlank() ||
+                   bookShortDto.getAuthorId() <= 0) {
+               resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                       "Book must have non-null bookTitle and positive authorId");
+           } else {
+               BookShortDto createdBook = bookServiceImpl.createBook(bookShortDto);
+               sendAsJson(resp, createdBook);
+           }
+        } else {
+               resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
+        }
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String pathInfo = req.getPathInfo();
+        if (pathInfo == null || !pathInfo.matches("/\\d+")) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
+            return;
+        }
+        int bookId = Integer.parseInt(pathInfo.substring(1));
+        bookServiceImpl.deleteBook(bookId);
+        resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 
     @Override
@@ -44,13 +71,8 @@ public class BookController extends HttpServlet {
         }
     }
 
-    private void getAllBooks(HttpServletResponse resp) throws IOException {
-        List<BookDto> books = bookService.getAllBooks();
-        sendAsJson(resp, books);
-    }
-
     private void getBookById(HttpServletResponse resp, int bookId) throws IOException {
-        BookDto book = bookService.getBookById(bookId);
+        BookDto book = bookServiceImpl.getBookById(bookId);
         if (book != null) {
             sendAsJson(resp, book);
         } else {
@@ -58,44 +80,18 @@ public class BookController extends HttpServlet {
         }
     }
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String requestBody = extractRequestBody(req);
-        BookShortDto bookShortDto = parseBookDto(requestBody);
-        String bookTitle = bookShortDto.getBookTitle();
-        if (bookTitle == null || bookTitle.isBlank()) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                    "Book must have a non-null and non-empty bookTitle");
-        } else {
-            BookShortDto createdBook = bookService.createBook(bookShortDto);
-            sendAsJson(resp, createdBook);
-        }
+    private void getAllBooks(HttpServletResponse resp) throws IOException {
+        List<BookDto> books = bookServiceImpl.getAllBooks();
+        sendAsJson(resp, books);
     }
 
-    @Override
-    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String pathInfo = req.getPathInfo();
-        if (pathInfo == null || !pathInfo.matches("/\\d+")) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
-            return;
-        }
-        int bookId = Integer.parseInt(pathInfo.substring(1));
-        bookService.deleteBook(bookId);
-        resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
-    }
-
-    private String extractRequestBody(HttpServletRequest req) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(req.getInputStream()))) {
-            return reader.lines().collect(Collectors.joining(System.lineSeparator()));
-        }
-    }
-
-    private BookShortDto parseBookDto(String requestBody) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            return mapper.readValue(requestBody, BookShortDto.class);
+    private Optional<BookShortDto> extractRequestBody(HttpServletRequest req) throws IOException {
+        try (BufferedReader reader = req.getReader()) {
+            ObjectMapper mapper = new ObjectMapper();
+            BookShortDto bookShortDto = mapper.readValue(reader, BookShortDto.class);
+            return Optional.of(bookShortDto);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Invalid request body", e);
+            return Optional.empty();
         }
     }
 

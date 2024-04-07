@@ -1,4 +1,4 @@
-package ru.aston.dao;
+package ru.aston.dao.authorDao;
 
 import ru.aston.dto.AuthorDto.AuthorDto;
 import ru.aston.dto.AuthorDto.AuthorDtoShort;
@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AuthorDao {
+public class AuthorDaoImpl implements AuthorDao {
     private final DataSource dataSource;
     private final String createAuthorQuery = "INSERT INTO authors (author_name) VALUES(?)";
     private final String deleteAuthorQuery = "DELETE FROM authors WHERE author_id = ?";
@@ -24,11 +24,11 @@ public class AuthorDao {
             "LEFT JOIN books b ON a.author_id = b.author_id " +
             "WHERE a.author_id = ?";
 
-    public AuthorDao() {
+    public AuthorDaoImpl() {
         this.dataSource = ConnectionManager.getDataSource();
     }
 
-    public AuthorDao(DataSource dataSource) {
+    public AuthorDaoImpl(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -68,12 +68,13 @@ public class AuthorDao {
             while (resultSet.next()) {
                 int authorId = resultSet.getInt("author_id");
 
-                // If the author is not already in the map, create a new AuthorDto object and add it to the map
-                if (!mapAuthor.containsKey(authorId)) {
-                    AuthorDto authorDto = new AuthorDto();
+                // Retrieve the AuthorDto object from the map if it exists, or create a new one
+                AuthorDto authorDto = mapAuthor.computeIfAbsent(authorId, k -> new AuthorDto());
+
+                // Set author attributes if they are not already set
+                if (authorDto.getAuthorId() == 0) {
                     authorDto.setAuthorId(authorId);
                     authorDto.setAuthorName(resultSet.getString("author_name"));
-                    mapAuthor.put(authorId, authorDto);
                 }
 
                 // Create a new BookDto object and set its attributes
@@ -82,15 +83,12 @@ public class AuthorDao {
                     bookDto.setBookId(resultSet.getInt("book_id"));
                     bookDto.setBookTitle(resultSet.getString("book_title"));
 
-                    // Check if the author already has a books list
-                    if (mapAuthor.get(authorId).getBooks() == null) {
-                        // If not, initialize the books list
-                        mapAuthor.get(authorId).setBooks(new ArrayList<>());
-                    }
-
                     // Add the book to the author's list of books
-                    mapAuthor.get(authorId).getBooks().add(bookDto);
+                    authorDto.getBooks().add(bookDto);
                 }
+
+                // Put the authorDto object into the map
+                mapAuthor.put(authorId, authorDto);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -100,22 +98,27 @@ public class AuthorDao {
         return new ArrayList<>(mapAuthor.values());
     }
 
+
     public AuthorDto getAuthorById(int authorId) {
         AuthorDto authorDto = null;
         try (Connection connection = dataSource.getConnection();
-        PreparedStatement preparedStatement = connection.prepareStatement(getAuthorById)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(getAuthorById)) {
             preparedStatement.setInt(1, authorId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if(resultSet.next()) {
                     authorDto = new AuthorDto();
                     authorDto.setAuthorId(authorId);
                     authorDto.setAuthorName(resultSet.getString("author_name"));
-                }
-                if (resultSet.getInt("book_id") != 0) {
-                    BookDto bookDto = new BookDto();
-                    bookDto.setBookId(resultSet.getInt("book_id"));
-                    bookDto.setBookTitle(resultSet.getString("book_title"));
-                    authorDto.getBooks().add(bookDto);
+
+                    // Move the logic for retrieving book information inside this if block
+                    do {
+                        if (resultSet.getInt("book_id") != 0) {
+                            BookDto bookDto = new BookDto();
+                            bookDto.setBookId(resultSet.getInt("book_id"));
+                            bookDto.setBookTitle(resultSet.getString("book_title"));
+                            authorDto.getBooks().add(bookDto);
+                        }
+                    } while(resultSet.next());
                 }
             }
         } catch (SQLException e) {

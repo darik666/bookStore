@@ -1,4 +1,4 @@
-package ru.aston.dao;
+package ru.aston.dao.bookDao;
 
 import ru.aston.dto.AuthorDto.AuthorDto;
 import ru.aston.dto.BookDto.BookDto;
@@ -12,7 +12,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BookDao {
+public class BookDaoImpl implements BookDao {
     private final DataSource dataSource;
     private final String createBookQuery = "INSERT INTO books (book_title, author_id) VALUES(?, ?)";
     private final String deleteBookQuery = "DELETE FROM books WHERE book_id = ?";
@@ -29,11 +29,11 @@ public class BookDao {
             "LEFT JOIN authors a ON b.author_id = a.author_id " +
             "LEFT JOIN comments c ON b.book_id = c.book_id ";
 
-    public BookDao() {
+    public BookDaoImpl() {
         this.dataSource = ConnectionManager.getDataSource();
     }
 
-    public BookDao(DataSource dataSource) {
+    public BookDaoImpl(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -131,6 +131,7 @@ public class BookDao {
                 if (commentId != 0) {
                     CommentDto commentDto = new CommentDto();
                     commentDto.setCommentId(commentId);
+                    commentDto.setText(resultSet.getString("text"));
 
                     UserDto userDto = new UserDto();
                     userDto.setUserId(resultSet.getInt("user_id"));

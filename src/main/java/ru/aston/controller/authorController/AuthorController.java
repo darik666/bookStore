@@ -2,35 +2,60 @@ package ru.aston.controller.authorController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import ru.aston.dao.AuthorDao;
 import ru.aston.dto.AuthorDto.AuthorDto;
 import ru.aston.dto.AuthorDto.AuthorDtoShort;
-import ru.aston.service.AuthorService;
+import ru.aston.service.authorService.AuthorServiceImpl;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.sql.DataSource;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @WebServlet("/authors/*")
 public class AuthorController extends HttpServlet {
-    private final AuthorService authorService;
+    private final AuthorServiceImpl authorServiceImpl;
 
     public AuthorController() {
-        this.authorService = new AuthorService();
+        this.authorServiceImpl = new AuthorServiceImpl();
     }
 
-    public AuthorController(DataSource dataSource) {
-        this.authorService = new AuthorService(new AuthorDao(dataSource));
+    public AuthorController(AuthorServiceImpl authorServiceImpl) {
+        this.authorServiceImpl = authorServiceImpl;
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        Optional<AuthorDtoShort> authorDtoShortOptional = extractRequestBody(req);
+        if (authorDtoShortOptional.isPresent()) {
+            AuthorDtoShort authorDtoShort = authorDtoShortOptional.get();
+            if (authorDtoShort.getAuthorName() == null || authorDtoShort.getAuthorName().isBlank()) {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Author must have a non-null and non-empty authorName");
+            } else {
+                AuthorDto createdAuthor = authorServiceImpl.createAuthor(authorDtoShort);
+                sendAsJson(resp, createdAuthor);
+            }
+        } else {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
+        }
+    }
+
+    @Override
+    public void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String pathInfo = req.getPathInfo();
+        if (pathInfo == null || !pathInfo.matches("/\\d+")) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
+            return;
+        }
+        int authorId = Integer.parseInt(pathInfo.substring(1));
+        authorServiceImpl.deleteAuthor(authorId);
+        resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+    }
+
+    @Override
+    public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String pathInfo = req.getPathInfo();
         if (pathInfo == null || pathInfo.equals("/")) {
             getAllAuthors(resp);
@@ -44,13 +69,8 @@ public class AuthorController extends HttpServlet {
         }
     }
 
-    private void getAllAuthors(HttpServletResponse resp) throws IOException {
-        List<AuthorDto> authors = authorService.getAllAuthors();
-        sendAsJson(resp, authors);
-    }
-
     private void getAuthorById(HttpServletResponse resp, int authorId) throws IOException {
-        AuthorDto author = authorService.getAuthorById(authorId);
+        AuthorDto author = authorServiceImpl.getAuthorById(authorId);
         if (author != null) {
             sendAsJson(resp, author);
         } else {
@@ -58,44 +78,18 @@ public class AuthorController extends HttpServlet {
         }
     }
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String requestBody = extractRequestBody(req);
-        AuthorDtoShort authorDtoShort = parseAuthorDtoShort(requestBody);
-        String authorName = authorDtoShort.getAuthorName();
-        if (authorName == null || authorName.isBlank()) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                    "Author must have a non-null and non-empty authorName");
-        } else {
-            AuthorDto createdAuthor = authorService.createAuthor(authorDtoShort);
-            sendAsJson(resp, createdAuthor);
-        }
+    private void getAllAuthors(HttpServletResponse resp) throws IOException {
+        List<AuthorDto> authors = authorServiceImpl.getAllAuthors();
+        sendAsJson(resp, authors);
     }
 
-    @Override
-    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String pathInfo = req.getPathInfo();
-        if (pathInfo == null || !pathInfo.matches("/\\d+")) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
-            return;
-        }
-        int authorId = Integer.parseInt(pathInfo.substring(1));
-        authorService.deleteAuthor(authorId);
-        resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
-    }
-
-    private String extractRequestBody(HttpServletRequest req) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(req.getInputStream()))) {
-            return reader.lines().collect(Collectors.joining(System.lineSeparator()));
-        }
-    }
-
-    private AuthorDtoShort parseAuthorDtoShort(String requestBody) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            return mapper.readValue(requestBody, AuthorDtoShort.class);
+    private Optional<AuthorDtoShort> extractRequestBody(HttpServletRequest req) throws IOException {
+        try (BufferedReader reader = req.getReader()) {
+            ObjectMapper mapper = new ObjectMapper();
+            AuthorDtoShort authorDtoShort = mapper.readValue(reader, AuthorDtoShort.class);
+            return Optional.of(authorDtoShort);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Invalid request body", e);
+            return Optional.empty();
         }
     }
 

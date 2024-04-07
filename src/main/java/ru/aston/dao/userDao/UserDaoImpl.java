@@ -1,4 +1,4 @@
-package ru.aston.dao;
+package ru.aston.dao.userDao;
 
 import ru.aston.dto.BookDto.BookDto;
 import ru.aston.dto.CommentDto.CommentDto;
@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class UserDao {
+public class UserDaoImpl implements UserDao {
     private final DataSource dataSource;
     private final String postUserQuery = "INSERT INTO users (user_name) VALUES(?)";
     private final String deleteUserQuery = "DELETE FROM users WHERE user_id = ?";
@@ -37,12 +37,52 @@ public class UserDao {
             "LEFT JOIN comments c ON u.user_id = c.user_id " +
             "LEFT JOIN books b ON c.book_id = b.book_id";
 
-    public UserDao(DataSource dataSource) {
+    public UserDaoImpl(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
-    public UserDao() {
+    public UserDaoImpl() {
         this.dataSource = ConnectionManager.getDataSource();
+    }
+
+    public UserDto postUser(UserDtoShort userDtoShort) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement =
+                     connection.prepareStatement(postUserQuery, Statement.RETURN_GENERATED_KEYS)) {
+            preparedStatement.setString(1, userDtoShort.getName());
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected > 0) {
+                try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int generatedId = generatedKeys.getInt(1);
+                        UserDto user = new UserDto();
+                        user.setUserName(userDtoShort.getName());
+                        user.setUserId(generatedId);
+                        return user;
+                    } else {
+                        throw new SQLException("No generated keys obtained.");
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error executing SQL query", e);
+        }
+        return null;
+    }
+
+    public void deleteUser(int userId) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(deleteUserQuery)) {
+            preparedStatement.setInt(1, userId);
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new SQLException("User wit id = " + userId + " not found!");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error executing SQL query", e);
+        }
     }
 
     public UserDto getUserById(int userId) {
@@ -66,6 +106,7 @@ public class UserDao {
                         comment.setCommentId(resultSet.getInt("comment_id"));
                         comment.setText(resultSet.getString("comment_text"));
                         comments.add(comment);
+                        user.getComments().add(comment);
                     }
 
                     if (resultSet.getInt("book_id") != 0) {
@@ -73,14 +114,12 @@ public class UserDao {
                         book.setBookId(resultSet.getInt("book_id"));
                         book.setBookTitle(resultSet.getString("book_title"));
                         reviewedBooks.add(book);
+                        user.getReviewedBooks().add(book);
                     }
                 }
-
-                user.setComments(comments);
-                user.setReviewedBooks(reviewedBooks);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error executing SQL query", e);
         }
         return user;
     }
@@ -124,48 +163,8 @@ public class UserDao {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error executing SQL query", e);
         }
         return new ArrayList<>(userMap.values());
-    }
-
-    public void deleteUser(int userId) {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(deleteUserQuery)) {
-            preparedStatement.setInt(1, userId);
-            int rowsAffected = preparedStatement.executeUpdate();
-            if (rowsAffected == 0) {
-                throw new SQLException("User wit id = " + userId + " not found!");
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public UserDto postUser(UserDtoShort userDtoShort) {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement =
-                     connection.prepareStatement(postUserQuery, Statement.RETURN_GENERATED_KEYS)) {
-            preparedStatement.setString(1, userDtoShort.getName());
-            int rowsAffected = preparedStatement.executeUpdate();
-
-            if (rowsAffected > 0) {
-                try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        int generatedId = generatedKeys.getInt(1);
-                        UserDto user = new UserDto();
-                        user.setUserName(userDtoShort.getName());
-                        user.setUserId(generatedId);
-                        return user;
-                    } else {
-                        throw new SQLException("No generated keys obtained.");
-                    }
-                }
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Error inserting user", e);
-        }
-        return null;
     }
 }

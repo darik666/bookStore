@@ -1,4 +1,4 @@
-package ru.aston.dao;
+package ru.aston.dao.commentDao;
 
 import ru.aston.dto.BookDto.BookDto;
 import ru.aston.dto.CommentDto.CommentDto;
@@ -11,7 +11,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CommentDao {
+public class CommentDaoImpl implements CommentDao {
     private final DataSource dataSource;
     private final String getAllCommentsQuery = "SELECT c.comment_id, c.user_id, c.book_id, " +
             "c.text, u.user_name, b.book_title " +
@@ -29,11 +29,11 @@ public class CommentDao {
     private final String deleteCommentQuery = "DELETE FROM comments " +
             "WHERE comment_id = ? ";
 
-    public CommentDao() {
+    public CommentDaoImpl() {
         this.dataSource = ConnectionManager.getDataSource();
     }
 
-    public CommentDao(DataSource dataSource) {
+    public CommentDaoImpl(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 

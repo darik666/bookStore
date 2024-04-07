@@ -9,6 +9,7 @@ import ru.aston.dto.CommentDto.CommentDto;
 import ru.aston.model.Author.Author;
 import ru.aston.model.Comment.Comment;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -18,7 +19,7 @@ public class BookDto {
     private int bookId;
     private String bookTitle;
     private AuthorDto author;
-    private List<CommentDto> comments;
+    private List<CommentDto> comments = new ArrayList<>();
 
     public int getBookId() {
         return bookId;

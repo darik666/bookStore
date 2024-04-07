@@ -1,12 +1,13 @@
-package ru.aston.controller.userController;
+package ru.aston.controller.authorController;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.aston.dto.UserDto.UserDto;
-import ru.aston.service.userService.UserServiceImpl;
+import ru.aston.dto.AuthorDto.AuthorDto;
+import ru.aston.service.authorService.AuthorServiceImpl;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
@@ -18,11 +19,11 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verify;
 
 
 @ExtendWith(MockitoExtension.class)
-public class UserControllerTest {
+public class AuthorControllerTest {
     @Mock
     private HttpServletRequest mockRequest;
 
@@ -30,57 +31,57 @@ public class UserControllerTest {
     private HttpServletResponse mockResponse;
 
     @Mock
-    private UserServiceImpl mockUserServiceImpl;
+    private AuthorServiceImpl mockAuthorServiceImpl;
 
-    private UserController userController;
+    private AuthorController authorController;
 
     @BeforeEach
     public void setUp() {
-        userController = new UserController(mockUserServiceImpl);
+        authorController = new AuthorController(mockAuthorServiceImpl);
     }
 
     @Test
-    public void testDoPost_ValidUser() throws Exception {
+    public void testDoPost_ValidAuthor() throws Exception {
         // Arrange
-        UserDto userDto = new UserDto();
-        userDto.setUserId(1);
-        userDto.setUserName("Jameson");
+        AuthorDto authorDto = new AuthorDto();
+        authorDto.setAuthorId(1);
+        authorDto.setAuthorName("Steven King");
 
-        String requestBody = "{\"name\": \"Jameson\"}";
+        String requestBody = "{\"authorName\": \"Steven King\"}";
         BufferedReader reader = new BufferedReader(new StringReader(requestBody));
         PrintWriter writer = new PrintWriter(new StringWriter());
 
         when(mockRequest.getReader()).thenReturn(reader);
         when(mockResponse.getWriter()).thenReturn(writer);
-        when(mockUserServiceImpl.createUser(any())).thenReturn(userDto); // Assume createUser returns true for valid user
+        when(mockAuthorServiceImpl.createAuthor(any())).thenReturn(authorDto); // Assume createAuthor returns true for valid author
 
         // Act
-        userController.doPost(mockRequest, mockResponse);
+        authorController.doPost(mockRequest, mockResponse);
 
         // Assert
         verify(mockRequest).getReader();
-        verify(mockUserServiceImpl).createUser(any());
+        verify(mockAuthorServiceImpl).createAuthor(any());
         verify(mockResponse).setContentType("application/json");
         // Add more assertions based on your response
     }
 
     @Test
-    public void testDoPost_InvalidUser() throws Exception {
+    public void testDoPost_InvalidAuthor() throws Exception {
         // Arrange
-        String requestBody = "{\"name\": \"\"}"; // Invalid request body
+        String requestBody = "{\"authorName\": \"\"}"; // Invalid request body
         BufferedReader reader = new BufferedReader(new StringReader(requestBody));
-        PrintWriter writer = new PrintWriter(new StringWriter());
 
         when(mockRequest.getReader()).thenReturn(reader);
 
         // Act
-        userController.doPost(mockRequest, mockResponse);
+        authorController.doPost(mockRequest, mockResponse);
 
         // Assert
         verify(mockRequest).getReader();
-        verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "User must have a non-null and non-empty userName");
-        // Verify that no interaction with the UserService occurred
-        verifyNoInteractions(mockUserServiceImpl);
+        verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST,
+                "Author must have a non-null and non-empty authorName");
+        // Verify that no interaction with the AuthorService occurred
+        verifyNoInteractions(mockAuthorServiceImpl);
         // Add more assertions based on your response
     }
 
@@ -89,32 +90,31 @@ public class UserControllerTest {
         // Arrange
         String requestBody = ""; // Invalid request body
         BufferedReader reader = new BufferedReader(new StringReader(requestBody));
-        PrintWriter writer = new PrintWriter(new StringWriter());
 
         when(mockRequest.getReader()).thenReturn(reader);
 
         // Act
-        userController.doPost(mockRequest, mockResponse);
+        authorController.doPost(mockRequest, mockResponse);
 
         // Assert
         verify(mockRequest).getReader();
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
-        // Verify that no interaction with the UserService occurred
-        verifyNoInteractions(mockUserServiceImpl);
+        // Verify that no interaction with the AuthorService occurred
+        verifyNoInteractions(mockAuthorServiceImpl);
         // Add more assertions based on your response
     }
 
     @Test
-    public void testDoDelete_ValidUser() throws Exception {
+    public void testDoDelete_ValidAuthor() throws Exception {
         // Arrange
-        when(mockRequest.getPathInfo()).thenReturn("/123"); // Assuming user ID is 123
+        when(mockRequest.getPathInfo()).thenReturn("/123");
         PrintWriter writer = new PrintWriter(new StringWriter());
 
         // Act
-        userController.doDelete(mockRequest, mockResponse);
+        authorController.doDelete(mockRequest, mockResponse);
 
         // Assert
-        verify(mockUserServiceImpl).deleteUser(123); // Ensure deleteUser is called with correct user ID
+        verify(mockAuthorServiceImpl).deleteAuthor(123); // Ensure deleteAuthor is called with correct author ID
         verify(mockResponse).setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 
@@ -125,7 +125,7 @@ public class UserControllerTest {
         PrintWriter writer = new PrintWriter(new StringWriter());
 
         // Act
-        userController.doDelete(mockRequest, mockResponse);
+        authorController.doDelete(mockRequest, mockResponse);
 
         // Assert
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
@@ -138,7 +138,7 @@ public class UserControllerTest {
         PrintWriter writer = new PrintWriter(new StringWriter());
 
         // Act
-        userController.doGet(mockRequest, mockResponse);
+        authorController.doGet(mockRequest, mockResponse);
 
         // Assert
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
@@ -151,56 +151,55 @@ public class UserControllerTest {
         PrintWriter writer = new PrintWriter(new StringWriter());
         when(mockResponse.getWriter()).thenReturn(writer);
 
-        List<UserDto> userList = new ArrayList<>();
-        userList.add(new UserDto());
-        userList.add(new UserDto());
-        when(mockUserServiceImpl.getAllUsers()).thenReturn(userList);
+        List<AuthorDto> authorList = new ArrayList<>();
+        authorList.add(new AuthorDto());
+        authorList.add(new AuthorDto());
+        when(mockAuthorServiceImpl.getAllAuthors()).thenReturn(authorList);
 
         // Act
-        userController.doGet(mockRequest, mockResponse);
+        authorController.doGet(mockRequest, mockResponse);
 
         // Assert
-        verify(mockUserServiceImpl).getAllUsers();
+        verify(mockAuthorServiceImpl).getAllAuthors();
         verify(mockResponse).setContentType("application/json");
         // Add more assertions based on the response content
     }
 
     @Test
-    public void testDoGet_GetUserById() throws Exception {
+    public void testDoGet_GetAuthorById() throws Exception {
         // Arrange
-        int userId = 123;
-        when(mockRequest.getPathInfo()).thenReturn("/" + userId);
+        int authorId = 123;
+        when(mockRequest.getPathInfo()).thenReturn("/" + authorId);
         PrintWriter writer = new PrintWriter(new StringWriter());
         when(mockResponse.getWriter()).thenReturn(writer);
 
-        UserDto user = new UserDto();
-        when(mockUserServiceImpl.getUserById(userId)).thenReturn(user);
+        AuthorDto author = new AuthorDto();
+        when(mockAuthorServiceImpl.getAuthorById(authorId)).thenReturn(author);
 
         // Act
-        userController.doGet(mockRequest, mockResponse);
+        authorController.doGet(mockRequest, mockResponse);
 
         // Assert
-        verify(mockUserServiceImpl).getUserById(userId);
+        verify(mockAuthorServiceImpl).getAuthorById(authorId);
         verify(mockResponse).setContentType("application/json");
         // Add more assertions based on the response content
     }
 
     @Test
-    public void testDoGet_UserNotFound() throws Exception {
+    public void testDoGet_AuthorNotFound() throws Exception {
         // Arrange
-        int userId = 123;
-        when(mockRequest.getPathInfo()).thenReturn("/" + userId);
+        int authorId = 123;
+        when(mockRequest.getPathInfo()).thenReturn("/" + authorId);
         PrintWriter writer = new PrintWriter(new StringWriter());
 
-        when(mockUserServiceImpl.getUserById(userId)).thenReturn(null);
+        when(mockAuthorServiceImpl.getAuthorById(authorId)).thenReturn(null);
 
         // Act
-        userController.doGet(mockRequest, mockResponse);
+        authorController.doGet(mockRequest, mockResponse);
 
         // Assert
-        verify(mockUserServiceImpl).getUserById(userId);
-        verify(mockResponse).sendError(HttpServletResponse.SC_NOT_FOUND, "User not found");
+        verify(mockAuthorServiceImpl).getAuthorById(authorId);
+        verify(mockResponse).sendError(HttpServletResponse.SC_NOT_FOUND, "Author not found");
     }
-
 
 }

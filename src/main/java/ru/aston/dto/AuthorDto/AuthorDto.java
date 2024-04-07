@@ -7,6 +7,7 @@ import lombok.Setter;
 import ru.aston.dto.BookDto.BookDto;
 import ru.aston.model.Book.Book;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -15,7 +16,7 @@ import java.util.List;
 public class AuthorDto {
     private int authorId;
     private String authorName;
-    private List<BookDto> books;
+    private List<BookDto> books = new ArrayList<>();
 
     public int getAuthorId() {
         return authorId;
