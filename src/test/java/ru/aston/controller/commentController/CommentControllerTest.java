@@ -22,6 +22,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.verify;
 
+/**
+ * Test class for the CommentController class, which handles HTTP requests related to comments.
+ */
 @ExtendWith(MockitoExtension.class)
 public class CommentControllerTest {
     @Mock
@@ -35,14 +38,21 @@ public class CommentControllerTest {
 
     private CommentController commentController;
 
+    /**
+     * Sets up the test environment before each test method is run.
+     */
     @BeforeEach
     public void setUp() {
         commentController = new CommentController(mockCommentServiceImpl);
     }
 
+    /**
+     * Tests the doPost method for creating a valid comment.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoPost_ValidComment() throws Exception {
-        // Arrange
         CommentShortDto commentShortDto = new CommentShortDto();
         commentShortDto.setCommentId(1);
         commentShortDto.setText("Nice book");
@@ -54,97 +64,104 @@ public class CommentControllerTest {
 
         when(mockRequest.getReader()).thenReturn(reader);
         when(mockResponse.getWriter()).thenReturn(writer);
-        when(mockCommentServiceImpl.createComment(any())).thenReturn(commentShortDto); // Assume createComment returns true for valid comment
+        when(mockCommentServiceImpl.createComment(any())).thenReturn(commentShortDto);
 
-        // Act
         commentController.doPost(mockRequest, mockResponse);
 
-        // Assert
         verify(mockRequest).getReader();
         verify(mockCommentServiceImpl).createComment(any());
         verify(mockResponse).setContentType("application/json");
-        // Add more assertions based on your response
     }
 
+    /**
+     * Tests the doPost method for handling an invalid comment creation request.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoPost_InvalidComment() throws Exception {
-        // Arrange
         String requestBody = "{\"text\": \"\", \"bookId\": 1,  \"userId\": 1}";
         BufferedReader reader = new BufferedReader(new StringReader(requestBody));
 
         when(mockRequest.getReader()).thenReturn(reader);
 
-        // Act
         commentController.doPost(mockRequest, mockResponse);
 
-        // Assert
         verify(mockRequest).getReader();
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST,
                 "Comment must have non-empty comment text, positive bookId and userId");
-        // Verify that no interaction with the commentService occurred
         verifyNoInteractions(mockCommentServiceImpl);
-        // Add more assertions based on your response
     }
 
+    /**
+     * Tests the doPost method for handling an invalid request body.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoPost_InvalidRequestBody() throws Exception {
-        // Arrange
-        String requestBody = ""; // Invalid request body
+        String requestBody = "";
         BufferedReader reader = new BufferedReader(new StringReader(requestBody));
 
         when(mockRequest.getReader()).thenReturn(reader);
 
-        // Act
         commentController.doPost(mockRequest, mockResponse);
 
-        // Assert
         verify(mockRequest).getReader();
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
-        // Verify that no interaction with the commentService occurred
         verifyNoInteractions(mockCommentServiceImpl);
-        // Add more assertions based on your response
     }
 
+    /**
+     * Tests the doDelete method for deleting a valid comment.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoDelete_ValidComment() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/123");
 
-        // Act
         commentController.doDelete(mockRequest, mockResponse);
 
-        // Assert
-        verify(mockCommentServiceImpl).deleteComment(123); // Ensure deleteComment is called with correct comment ID
+        verify(mockCommentServiceImpl).deleteComment(123);
         verify(mockResponse).setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 
+    /**
+     * Tests the doDelete method for handling an invalid URL.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoDelete_InvalidURL() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/invalid");
 
-        // Act
         commentController.doDelete(mockRequest, mockResponse);
 
-        // Assert
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
     }
 
+    /**
+     * Tests the doGet method for handling an invalid URL.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoGet_InvalidURL() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/invalid");
 
-        // Act
         commentController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
     }
 
+    /**
+     * Tests the doGet method for retrieving all comments.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoGet_GetAllComments() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/");
         PrintWriter writer = new PrintWriter(new StringWriter());
         when(mockResponse.getWriter()).thenReturn(writer);
@@ -154,18 +171,19 @@ public class CommentControllerTest {
         commentList.add(new CommentDto());
         when(mockCommentServiceImpl.getAllComments()).thenReturn(commentList);
 
-        // Act
         commentController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockCommentServiceImpl).getAllComments();
         verify(mockResponse).setContentType("application/json");
-        // Add more assertions based on the response content
     }
 
+    /**
+     * Tests the doGet method for retrieving a comment by ID.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoGet_GetCommentById() throws Exception {
-        // Arrange
         int commentId = 123;
         when(mockRequest.getPathInfo()).thenReturn("/" + commentId);
         PrintWriter writer = new PrintWriter(new StringWriter());
@@ -174,29 +192,27 @@ public class CommentControllerTest {
         CommentDto comment = new CommentDto();
         when(mockCommentServiceImpl.getCommentById(commentId)).thenReturn(comment);
 
-        // Act
         commentController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockCommentServiceImpl).getCommentById(commentId);
         verify(mockResponse).setContentType("application/json");
-        // Add more assertions based on the response content
     }
 
+    /**
+     * Tests the doGet method for handling a comment not found scenario.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoGet_commentNotFound() throws Exception {
-        // Arrange
         int commentId = 123;
         when(mockRequest.getPathInfo()).thenReturn("/" + commentId);
 
         when(mockCommentServiceImpl.getCommentById(commentId)).thenReturn(null);
 
-        // Act
         commentController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockCommentServiceImpl).getCommentById(commentId);
         verify(mockResponse).sendError(HttpServletResponse.SC_NOT_FOUND, "Comment not found");
     }
-    
 }

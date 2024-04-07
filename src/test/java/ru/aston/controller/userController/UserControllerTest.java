@@ -20,7 +20,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-
+/**
+ * Test class for the UserController class, which handles HTTP requests related to users.
+ */
 @ExtendWith(MockitoExtension.class)
 public class UserControllerTest {
     @Mock
@@ -34,14 +36,21 @@ public class UserControllerTest {
 
     private UserController userController;
 
+    /**
+     * Sets up the test environment before each test method is run.
+     */
     @BeforeEach
     public void setUp() {
         userController = new UserController(mockUserServiceImpl);
     }
 
+    /**
+     * Tests the doPost method for creating a valid user.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoPost_ValidUser() throws Exception {
-        // Arrange
         UserDto userDto = new UserDto();
         userDto.setUserId(1);
         userDto.setUserName("Jameson");
@@ -52,101 +61,104 @@ public class UserControllerTest {
 
         when(mockRequest.getReader()).thenReturn(reader);
         when(mockResponse.getWriter()).thenReturn(writer);
-        when(mockUserServiceImpl.createUser(any())).thenReturn(userDto); // Assume createUser returns true for valid user
+        when(mockUserServiceImpl.createUser(any())).thenReturn(userDto);
 
-        // Act
         userController.doPost(mockRequest, mockResponse);
 
-        // Assert
         verify(mockRequest).getReader();
         verify(mockUserServiceImpl).createUser(any());
         verify(mockResponse).setContentType("application/json");
-        // Add more assertions based on your response
     }
 
+    /**
+     * Tests the doPost method for handling an invalid user creation request.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoPost_InvalidUser() throws Exception {
-        // Arrange
-        String requestBody = "{\"name\": \"\"}"; // Invalid request body
+        String requestBody = "{\"name\": \"\"}";
         BufferedReader reader = new BufferedReader(new StringReader(requestBody));
-        PrintWriter writer = new PrintWriter(new StringWriter());
 
         when(mockRequest.getReader()).thenReturn(reader);
 
-        // Act
         userController.doPost(mockRequest, mockResponse);
 
-        // Assert
         verify(mockRequest).getReader();
-        verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "User must have a non-null and non-empty userName");
-        // Verify that no interaction with the UserService occurred
+        verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST,
+                "User must have a non-null and non-empty userName");
         verifyNoInteractions(mockUserServiceImpl);
-        // Add more assertions based on your response
     }
 
+    /**
+     * Tests the doPost method for handling an invalid request body.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoPost_InvalidRequestBody() throws Exception {
-        // Arrange
-        String requestBody = ""; // Invalid request body
+        String requestBody = "";
         BufferedReader reader = new BufferedReader(new StringReader(requestBody));
-        PrintWriter writer = new PrintWriter(new StringWriter());
 
         when(mockRequest.getReader()).thenReturn(reader);
 
-        // Act
         userController.doPost(mockRequest, mockResponse);
 
-        // Assert
         verify(mockRequest).getReader();
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
-        // Verify that no interaction with the UserService occurred
         verifyNoInteractions(mockUserServiceImpl);
-        // Add more assertions based on your response
     }
 
+    /**
+     * Tests the doDelete method for deleting a valid user.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoDelete_ValidUser() throws Exception {
-        // Arrange
-        when(mockRequest.getPathInfo()).thenReturn("/123"); // Assuming user ID is 123
-        PrintWriter writer = new PrintWriter(new StringWriter());
+        when(mockRequest.getPathInfo()).thenReturn("/123");
 
-        // Act
         userController.doDelete(mockRequest, mockResponse);
 
-        // Assert
-        verify(mockUserServiceImpl).deleteUser(123); // Ensure deleteUser is called with correct user ID
+        verify(mockUserServiceImpl).deleteUser(123);
         verify(mockResponse).setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 
+    /**
+     * Tests the doDelete method for handling an invalid URL.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoDelete_InvalidURL() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/invalid");
-        PrintWriter writer = new PrintWriter(new StringWriter());
 
-        // Act
         userController.doDelete(mockRequest, mockResponse);
 
-        // Assert
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
     }
 
+    /**
+     * Tests the doGet method for handling an invalid URL.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoGet_InvalidURL() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/invalid");
-        PrintWriter writer = new PrintWriter(new StringWriter());
 
-        // Act
         userController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
     }
 
+    /**
+     * Tests the doGet method for retrieving all users.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoGet_GetAllUsers() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/");
         PrintWriter writer = new PrintWriter(new StringWriter());
         when(mockResponse.getWriter()).thenReturn(writer);
@@ -156,18 +168,19 @@ public class UserControllerTest {
         userList.add(new UserDto());
         when(mockUserServiceImpl.getAllUsers()).thenReturn(userList);
 
-        // Act
         userController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockUserServiceImpl).getAllUsers();
         verify(mockResponse).setContentType("application/json");
-        // Add more assertions based on the response content
     }
 
+    /**
+     * Tests the doGet method for retrieving a user by ID.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoGet_GetUserById() throws Exception {
-        // Arrange
         int userId = 123;
         when(mockRequest.getPathInfo()).thenReturn("/" + userId);
         PrintWriter writer = new PrintWriter(new StringWriter());
@@ -176,31 +189,26 @@ public class UserControllerTest {
         UserDto user = new UserDto();
         when(mockUserServiceImpl.getUserById(userId)).thenReturn(user);
 
-        // Act
         userController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockUserServiceImpl).getUserById(userId);
         verify(mockResponse).setContentType("application/json");
-        // Add more assertions based on the response content
     }
 
+    /**
+     * Tests the doGet method for handling a user not found scenario.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoGet_UserNotFound() throws Exception {
-        // Arrange
         int userId = 123;
         when(mockRequest.getPathInfo()).thenReturn("/" + userId);
-        PrintWriter writer = new PrintWriter(new StringWriter());
-
         when(mockUserServiceImpl.getUserById(userId)).thenReturn(null);
 
-        // Act
         userController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockUserServiceImpl).getUserById(userId);
         verify(mockResponse).sendError(HttpServletResponse.SC_NOT_FOUND, "User not found");
     }
-
-
 }

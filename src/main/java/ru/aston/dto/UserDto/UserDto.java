@@ -9,6 +9,9 @@ import ru.aston.dto.CommentDto.CommentDto;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Class defines the properties and behavior of a user DTO object.
+ */
 @Getter
 @Setter
 @NoArgsConstructor

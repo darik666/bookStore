@@ -1,17 +1,17 @@
 package ru.aston.dto.BookDto;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.aston.dto.AuthorDto.AuthorDto;
 import ru.aston.dto.CommentDto.CommentDto;
-import ru.aston.model.Author.Author;
-import ru.aston.model.Comment.Comment;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents and defines parameters of a book DTO object.
+ */
 @Getter
 @Setter
 @NoArgsConstructor

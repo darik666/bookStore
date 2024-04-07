@@ -29,6 +29,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * Test class for DAO implementations focusing on author, book, and related operations.
+ * Uses TestMethodOrder annotation to specify the method execution order.
+ */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class DaoImplTests {
     private static UserServiceImpl userServiceImpl;
@@ -36,12 +40,18 @@ public class DaoImplTests {
     private static AuthorServiceImpl authorServiceImpl;
     private static BookServiceImpl bookServiceImpl;
 
+    // PostgresSQL container for testing
     private static final PostgreSQLContainer<?> postgresContainer =
             new PostgreSQLContainer<>("postgres:latest")
                     .withDatabaseName("test")
                     .withUsername("test")
                     .withPassword("test");
 
+    /**
+     * Setup method executed before all tests.
+     * Starts the PostgresSQL container, initializes the database schema,
+     * and initializes service and dao implementations.
+     */
     @BeforeAll
     static void beforeAll() {
         postgresContainer.start();
@@ -58,6 +68,10 @@ public class DaoImplTests {
         commentServiceImpl = new CommentServiceImpl(new CommentDaoImpl(dataSource));
     }
 
+    /**
+     * Teardown method executed after all tests.
+     * Stops the PostgresSQL container.
+     */
     @AfterAll
     static void afterAll() {
         postgresContainer.stop();
@@ -109,6 +123,10 @@ public class DaoImplTests {
         return comment2;
     }
 
+    /**
+     * Tests the successful creation of an author.
+     * Order: 1
+     */
     @Test
     @Order(1)
     public void testSuccessfulCreateAuthor() {
@@ -126,6 +144,12 @@ public class DaoImplTests {
         assertEquals(2, authorDto2.getAuthorId());
     }
 
+    /**
+     * Tests creating an author with a SQLException.
+     * Order: 2
+     *
+     * @throws SQLException if a database access error occurs
+     */
     @Test
     @Order(2)
     public void testCreateAuthorSQLException() throws SQLException {
@@ -135,23 +159,26 @@ public class DaoImplTests {
         AuthorDaoImpl authorDaoImpl = new AuthorDaoImpl(dataSourceMock);
         AuthorServiceImpl authorServiceImpl = new AuthorServiceImpl(authorDaoImpl);
 
-        assertThrows(RuntimeException.class, () -> {
-            authorServiceImpl.createAuthor(new AuthorDtoShort());
-        });
+        assertThrows(RuntimeException.class, () -> authorServiceImpl.createAuthor(new AuthorDtoShort()));
     }
 
+    /**
+     * Tests unsuccessful deletion of an author.
+     * Order: 3
+     */
     @Test
     @Order(3)
-    public void testUnsuccessfulDeleteAuthor() throws SQLException {
-        // Attempt to delete a non-existing user
-        assertThrows(RuntimeException.class, () -> {
-            authorServiceImpl.deleteAuthor(66);
-        });
+    public void testUnsuccessfulDeleteAuthor() {
+        assertThrows(RuntimeException.class, () -> authorServiceImpl.deleteAuthor(66));
     }
 
+    /**
+     * Tests successful deletion of an author.
+     * Order: 4
+     */
     @Test
     @Order(4)
-    public void testSuccessfulDeleteAuthor() throws SQLException {
+    public void testSuccessfulDeleteAuthor() {
         AuthorDtoShort authorDtoShort = new AuthorDtoShort();
         authorDtoShort.setAuthorName("John");
         AuthorDto authorDto = authorServiceImpl.createAuthor(authorDtoShort);
@@ -162,6 +189,10 @@ public class DaoImplTests {
         assertNull(authorDto1);
     }
 
+    /**
+     * Tests the successful creation of a book.
+     * Order: 5
+     */
     @Test
     @Order(5)
     public void testSuccessfulCreateBook() {
@@ -179,9 +210,13 @@ public class DaoImplTests {
         assertEquals("Book 2", createdBook2.getBookTitle());
     }
 
+    /**
+     * Tests successful deletion of a book.
+     * Order: 6
+     */
     @Test
     @Order(6)
-    public void testSuccessfulDeleteBook() throws SQLException {
+    public void testSuccessfulDeleteBook() {
         BookShortDto bookShortDto = new BookShortDto();
         bookShortDto.setBookTitle("TestBook");
         bookShortDto.setAuthorId(1);
@@ -190,20 +225,23 @@ public class DaoImplTests {
 
         bookServiceImpl.deleteBook(testBook.getBookId());
 
-        assertThrows(RuntimeException.class, () -> {
-            bookServiceImpl.getBookById(testBook.getBookId());
-        });
+        assertThrows(RuntimeException.class, () -> bookServiceImpl.getBookById(testBook.getBookId()));
     }
 
+    /**
+     * Tests unsuccessful deletion of a book.
+     * Order: 7
+     */
     @Test
     @Order(7)
-    public void testUnsuccessfulDeleteBook() throws SQLException {
-        assertThrows(RuntimeException.class, () -> {
-            bookServiceImpl.deleteBook(66);
-        });
+    public void testUnsuccessfulDeleteBook() {
+        assertThrows(RuntimeException.class, () -> bookServiceImpl.deleteBook(66));
     }
 
-
+    /**
+     * Tests the successful creation of a user.
+     * Order: 8
+     */
     @Test
     @Order(8)
     public void testSuccessfulCreateUser() {
@@ -219,6 +257,12 @@ public class DaoImplTests {
         assertEquals(userDtoShort2.getName(), createdUser2.getUserName());
     }
 
+    /**
+     * Tests creating a user with a SQLException.
+     * Order: 9
+     *
+     * @throws SQLException if a database access error occurs
+     */
     @Test
     @Order(9)
     public void testCreateUserSQLException() throws SQLException {
@@ -228,22 +272,26 @@ public class DaoImplTests {
         UserDaoImpl userDaoImpl = new UserDaoImpl(dataSourceMock);
         UserServiceImpl userServiceImpl = new UserServiceImpl(userDaoImpl);
 
-        assertThrows(RuntimeException.class, () -> {
-            userServiceImpl.createUser(new UserDtoShort());
-        });
+        assertThrows(RuntimeException.class, () -> userServiceImpl.createUser(new UserDtoShort()));
     }
 
+    /**
+     * Tests unsuccessful deletion of a user.
+     * Order: 10
+     */
     @Order(10)
     @Test
-    public void testUnsuccessfulDeleteUser() throws SQLException {
-        assertThrows(RuntimeException.class, () -> {
-            userServiceImpl.deleteUser(66);
-        });
+    public void testUnsuccessfulDeleteUser() {
+        assertThrows(RuntimeException.class, () -> userServiceImpl.deleteUser(66));
     }
 
+    /**
+     * Tests successful deletion of a user.
+     * Order: 11
+     */
     @Test
     @Order(11)
-    public void testSuccessfulDeleteUser() throws SQLException {
+    public void testSuccessfulDeleteUser() {
         UserDtoShort userDtoShort = new UserDtoShort();
         userDtoShort.setName("John");
         UserDto userDto = userServiceImpl.createUser(userDtoShort);
@@ -254,12 +302,15 @@ public class DaoImplTests {
         assertNull(user);
     }
 
+    /**
+     * Tests getting a user by ID with existing user having no comments and reviewed books.
+     * Order: 12
+     */
     @Test
     @Order(12)
-    public void testGetUserByIdExistingUserWithNoCommentsAndReviewedBooks() throws SQLException {
+    public void testGetUserByIdExistingUserWithNoCommentsAndReviewedBooks() {
         UserDto retrievedUser = userServiceImpl.getUserById(1);
 
-        // Assertions
         assertNotNull(retrievedUser);
         assertEquals(1, retrievedUser.getUserId());
         assertEquals(giveUser1().getName(), retrievedUser.getUserName());
@@ -267,14 +318,24 @@ public class DaoImplTests {
         assertEquals(0, retrievedUser.getReviewedBooks().size());
     }
 
+    /**
+     * Tests getting a user by ID for a non-existing user.
+     * Order: 13
+     */
     @Test
     @Order(13)
-    public void testGetUserByIdNonExistingUser() throws SQLException {
+    public void testGetUserByIdNonExistingUser() {
         UserDto retrievedUser = userServiceImpl.getUserById(100);
 
         assertNull(retrievedUser);
     }
 
+    /**
+     * Tests getting a user by ID with SQLException.
+     * Order: 14
+     *
+     * @throws SQLException if a database access error occurs
+     */
     @Test
     @Order(14)
     public void testGetUserByIdSQLException() throws SQLException {
@@ -284,11 +345,13 @@ public class DaoImplTests {
         UserDaoImpl userDaoImpl = new UserDaoImpl(dataSourceMock);
         UserServiceImpl userServiceImpl = new UserServiceImpl(userDaoImpl);
 
-        assertThrows(RuntimeException.class, () -> {
-            userServiceImpl.getUserById(1);
-        });
+        assertThrows(RuntimeException.class, () -> userServiceImpl.getUserById(1));
     }
 
+    /**
+     * Tests the successful creation of comments.
+     * Order: 15
+     */
     @Test
     @Order(15)
     public void testSuccessfulCreateComments() {
@@ -306,6 +369,12 @@ public class DaoImplTests {
         assertEquals(commentShortDto2.getBookId(), createdComment2.getBookId());
     }
 
+    /**
+     * Tests creating a comment with SQLException.
+     * Order: 16
+     *
+     * @throws SQLException if a database access error occurs
+     */
     @Test
     @Order(16)
     public void testCreateCommentSQLException() throws SQLException {
@@ -315,14 +384,16 @@ public class DaoImplTests {
         CommentDaoImpl commentDaoImpl = new CommentDaoImpl(dataSourceMock);
         CommentServiceImpl commentServiceImpl = new CommentServiceImpl(commentDaoImpl);
 
-        assertThrows(RuntimeException.class, () -> {
-            commentServiceImpl.createComment(new CommentShortDto());
-        });
+        assertThrows(RuntimeException.class, () -> commentServiceImpl.createComment(new CommentShortDto()));
     }
 
+    /**
+     * Tests successful deletion of a comment.
+     * Order: 17
+     */
     @Test
     @Order(17)
-    public void testSuccessfulDeleteComment() throws SQLException {
+    public void testSuccessfulDeleteComment() {
         CommentShortDto commentShortDto = giveComment1FromUser1ToBook1();
 
         CommentShortDto createdComment = commentServiceImpl.createComment(commentShortDto);
@@ -333,16 +404,18 @@ public class DaoImplTests {
         assertNull(commentDto);
     }
 
+    /**
+     * Tests getting a user by ID with existing user having comments and reviewed books.
+     * Order: 18
+     */
     @Test
     @Order(18)
-    public void testGetUserByIdExistingUserWithCommentsAndReviewedBooks() throws SQLException {
-        // Retrieve user by ID
+    public void testGetUserByIdExistingUserWithCommentsAndReviewedBooks() {
         UserDto retrievedUser = userServiceImpl.getUserById(1);
 
         String bookTitle = retrievedUser.getReviewedBooks().get(0).getBookTitle();
         String commentText = retrievedUser.getComments().get(0).getText();
 
-        // Assertions
         assertNotNull(retrievedUser);
         assertEquals(1, retrievedUser.getUserId());
         assertEquals(giveUser1().getName(), retrievedUser.getUserName());
@@ -352,10 +425,13 @@ public class DaoImplTests {
         assertEquals(commentText, giveComment1FromUser1ToBook1().getText());
     }
 
+    /**
+     * Tests getting all users with existing users having comments and reviewed books.
+     * Order: 19
+     */
     @Test
     @Order(19)
-    public void testGetAllUsersByIdExistingUserWithCommentsAndReviewedBooks() throws SQLException {
-        // Retrieve all users
+    public void testGetAllUsersByIdExistingUserWithCommentsAndReviewedBooks() {
         List<UserDto> usersList = userServiceImpl.getAllUsers();
 
         String bookTitleOfUser1 = usersList.get(0).getReviewedBooks().get(0).getBookTitle();
@@ -363,7 +439,6 @@ public class DaoImplTests {
         String commentOfUser1 = usersList.get(0).getComments().get(0).getText();
         String commentOfUser2 = usersList.get(1).getComments().get(0).getText();
 
-        // Assertions
         assertNotNull(usersList);
         assertEquals(2, usersList.size());
         assertEquals(giveBook1WithAuthor1().getBookTitle(), bookTitleOfUser1);
@@ -372,6 +447,10 @@ public class DaoImplTests {
         assertEquals(giveComment2FromUser2ToBook2().getText(), commentOfUser2);
     }
 
+    /**
+     * Tests getting an author by ID with associated book.
+     * Order: 20
+     */
     @Test
     @Order(20)
     public void testGetAuthorByIdWithBook() {
@@ -385,6 +464,10 @@ public class DaoImplTests {
         assertEquals(authorDto.getBooks().get(0).getBookTitle(), bookShortDto.getBookTitle());
     }
 
+    /**
+     * Tests getting all authors with associated books.
+     * Order: 21
+     */
     @Test
     @Order(21)
     public void testGetAllAuthorsWithBook() {
@@ -399,10 +482,13 @@ public class DaoImplTests {
         assertEquals(authorsList.get(1).getBooks().get(0).getBookTitle(), bookShortDto.getBookTitle());
     }
 
+    /**
+     * Tests getting a book by ID with associated author and comments.
+     * Order: 22
+     */
     @Test
     @Order(22)
     public void testGetBookByIdWithAuthorAndComments() {
-
         BookDto bookDto = bookServiceImpl.getBookById(1);
 
         List<CommentDto> commentList = bookDto.getComments();
@@ -415,10 +501,13 @@ public class DaoImplTests {
         assertEquals(giveComment1FromUser1ToBook1().getText(), commentList.get(0).getText());
     }
 
+    /**
+     * Tests getting all books with associated author and comments.
+     * Order: 23
+     */
     @Test
     @Order(23)
     public void testGetAllBooksWithAuthorAndComments() {
-
         List<BookDto> bookList = bookServiceImpl.getAllBooks();
         List<CommentDto> commentsListOfBook2 = bookList.get(1).getComments();
 
@@ -431,10 +520,13 @@ public class DaoImplTests {
         assertEquals(giveComment2FromUser2ToBook2().getUserId(), commentsListOfBook2.get(0).getUser().getUserId());
     }
 
+    /**
+     * Tests getting a comment by ID.
+     * Order: 24
+     */
     @Test
     @Order(24)
     public void testGetCommentById() {
-
         CommentDto commentDto = commentServiceImpl.getCommentById(1);
 
         assertNotNull(commentDto);
@@ -443,6 +535,10 @@ public class DaoImplTests {
         assertEquals(giveComment1FromUser1ToBook1().getText(), commentDto.getText());
     }
 
+    /**
+     * Tests getting all comments.
+     * Order: 25
+     */
     @Test
     @Order(25)
     public void testGetAllComments() {

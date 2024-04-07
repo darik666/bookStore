@@ -3,9 +3,11 @@ package ru.aston.dto.CommentDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.aston.dto.BookDto.BookDto;
-import ru.aston.dto.UserDto.UserDto;
 
+/**
+ * Represents and defines a parameters of a short comment DTO
+ * object to return for client
+ */
 @Getter
 @Setter
 @NoArgsConstructor

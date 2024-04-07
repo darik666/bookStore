@@ -3,11 +3,10 @@ package ru.aston.dto.BookDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.aston.dto.AuthorDto.AuthorDto;
-import ru.aston.dto.CommentDto.CommentDto;
 
-import java.util.List;
-
+/**
+ * Represents and defines parameters of a short book DTO object.
+ */
 @Getter
 @Setter
 @NoArgsConstructor

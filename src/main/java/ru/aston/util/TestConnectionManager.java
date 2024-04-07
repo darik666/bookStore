@@ -9,8 +9,19 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+/**
+ * TestConnectionManager class provides methods for setting up and initializing a test database schema.
+ */
 public class TestConnectionManager {
 
+    /**
+     * Returns a DataSource object configured with the provided JDBC URL, username, and password.
+     *
+     * @param jdbcUrl  the JDBC URL for the database
+     * @param username the username for database authentication
+     * @param password the password for database authentication
+     * @return configured DataSource object
+     */
     public static DataSource getDataSource(String jdbcUrl, String username, String password) {
         BasicDataSource dataSource = new BasicDataSource();
         dataSource.setUrl(jdbcUrl);
@@ -21,20 +32,23 @@ public class TestConnectionManager {
         return dataSource;
     }
 
+    /**
+     * Initializes the database schema using the provided DataSource.
+     *
+     * @param dataSource the DataSource object representing the database connection
+     */
     public static void initializeDatabaseSchema(DataSource dataSource) {
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement()) {
-            // Load the schema SQL file
             InputStream inputStream = TestConnectionManager.class.getResourceAsStream("/schema.sql");
             if (inputStream != null) {
                 String schemaSql = new String(inputStream.readAllBytes());
-                // Execute the SQL statements to create tables and define constraints
                 statement.executeUpdate(schemaSql);
             } else {
                 throw new IOException("Unable to load schema SQL file.");
             }
         } catch (IOException | SQLException e) {
-            e.printStackTrace(); // Handle the exception appropriately
+            e.printStackTrace();
         }
     }
 }

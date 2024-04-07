@@ -6,13 +6,28 @@ import ru.aston.dto.BookDto.BookShortDto;
 
 import java.util.List;
 
+/**
+ * Implementation of interface defining operations related to book management.
+ */
 public class BookServiceImpl implements BookService {
+
+    /**
+     * The data access object for interacting with book data in the database.
+     */
     private final BookDaoImpl bookDaoImpl;
 
+    /**
+     * Constructs a new BookServiceImpl instance for regular application use.
+     */
     public BookServiceImpl() {
         this.bookDaoImpl = new BookDaoImpl();
     }
 
+    /**
+     * Constructs a new BookServiceImpl instance for testing purposes.
+     *
+     * @param bookDaoImpl The BookDaoImpl instance to be used.
+     */
     public BookServiceImpl(BookDaoImpl bookDaoImpl) {
         this.bookDaoImpl = bookDaoImpl;
     }

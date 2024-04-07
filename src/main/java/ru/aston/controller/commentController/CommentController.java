@@ -15,18 +15,43 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Servlet implementation for managing comment-related HTTP requests.
+ * This servlet handles comment creation, retrieval, and deletion.
+ */
 @WebServlet("/comments/*")
 public class CommentController extends HttpServlet {
+    /**
+     * The CommentServiceImpl instance associated with this CommentController.
+     */
     private final CommentServiceImpl commentServiceImpl;
 
+    /**
+     * Constructs a new CommentController instance with a default CommentServiceImpl.
+     */
     public CommentController() {
         this.commentServiceImpl = new CommentServiceImpl();
     }
 
+    /**
+     * Constructs a new CommentController instance
+     * with a provided CommentServiceImpl for testing purposes.
+     *
+     * @param commentServiceImpl The CommentServiceImpl instance to be used.
+     */
     public CommentController(CommentServiceImpl commentServiceImpl) {
         this.commentServiceImpl = commentServiceImpl;
     }
 
+    /**
+     * Handles HTTP POST requests for creating new comments.
+     * Expects a JSON request body containing comment text, user id and book id.
+     * Responds with the created comment's details in JSON format.
+     *
+     * @param req  The HttpServletRequest object representing the request.
+     * @param resp The HttpServletResponse object representing the response.
+     * @throws IOException      If an I/O error occurs while handling the request.
+     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         Optional<CommentShortDto> commentShortDtoOptional = extractRequestBody(req);
@@ -45,6 +70,15 @@ public class CommentController extends HttpServlet {
         }
     }
 
+    /**
+     * Handles HTTP DELETE requests for deleting comments.
+     * Expects a comment ID in the request URL path.
+     * Responds with a 204 No Content status upon successful deletion.
+     *
+     * @param req  The HttpServletRequest object representing the request.
+     * @param resp The HttpServletResponse object representing the response.
+     * @throws IOException      If an I/O error occurs while handling the request.
+     */
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String pathInfo = req.getPathInfo();
@@ -57,7 +91,15 @@ public class CommentController extends HttpServlet {
         resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 
-
+    /**
+     * Handles HTTP GET requests for retrieving comment.
+     * Supports retrieving all comment or a specific comment by ID.
+     * Responds with comment data in JSON format.
+     *
+     * @param req  The HttpServletRequest object representing the request.
+     * @param resp The HttpServletResponse object representing the response.
+     * @throws IOException      If an I/O error occurs while handling the request.
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String pathInfo = req.getPathInfo();
@@ -73,6 +115,14 @@ public class CommentController extends HttpServlet {
         }
     }
 
+    /**
+     * Retrieves a comment by ID and sends it as JSON in the response.
+     * If the comment is not found, sends a 404 error response.
+     *
+     * @param resp   HttpServletResponse object to handle the response
+     * @param commentId ID of the comment to retrieve
+     * @throws IOException if an I/O exception occurs
+     */
     private void getCommentById(HttpServletResponse resp, int commentId) throws IOException {
         CommentDto comment = commentServiceImpl.getCommentById(commentId);
         if (comment != null) {
@@ -82,11 +132,24 @@ public class CommentController extends HttpServlet {
         }
     }
 
+    /**
+     * Retrieves all comments and sends them as JSON in the response.
+     *
+     * @param resp HttpServletResponse object to handle the response
+     * @throws IOException if an I/O exception occurs
+     */
     private void getAllComments(HttpServletResponse resp) throws IOException {
         List<CommentDto> comments = commentServiceImpl.getAllComments();
         sendAsJson(resp, comments);
     }
 
+    /**
+     * Extracts the request body as a CommentDtoShort object.
+     *
+     * @param req HttpServletRequest object representing the request
+     * @return Optional with CommentDtoShort object if extraction is successful, otherwise - empty Optional
+     * @throws IOException if an I/O exception occurs
+     */
     private Optional<CommentShortDto> extractRequestBody(HttpServletRequest req) throws IOException {
         try (BufferedReader reader = req.getReader()) {
             ObjectMapper mapper = new ObjectMapper();
@@ -97,6 +160,13 @@ public class CommentController extends HttpServlet {
         }
     }
 
+    /**
+     * Sends the specified object as JSON in the response.
+     *
+     * @param response HttpServletResponse object to handle the response
+     * @param obj      Object to be serialized to JSON
+     * @throws IOException if an I/O exception occurs
+     */
     private void sendAsJson(HttpServletResponse response, Object obj) throws IOException {
         response.setContentType("application/json");
         ObjectMapper mapper = new ObjectMapper();

@@ -6,40 +6,39 @@ import ru.aston.model.Comment.Comment;
 
 import java.util.List;
 
+/**
+ * Class defines the properties and behavior of a user object.
+ */
 @Getter
 @Setter
 @RequiredArgsConstructor
 public class User {
+
+    /**
+     * Identifier for the user.
+     */
     private int userId;
+
+    /**
+     * The name of the user.
+     */
     private String userName;
-    private List<Comment> comments; // One-to-Many association with Comment
-    private List<Book> reviewedBooks; // Many-to-Many association with Book
+
+    /**
+     * The list of comments associated with the user.
+     */
+    private List<Comment> comments;  // One-to-Many association with Comment
+
+    /**
+     * The list of books reviewed by the user.
+     */
+    private List<Book> reviewedBooks;  // Many-to-Many association with Book
 
     public int getUserId() {
         return userId;
     }
 
-    public String getUserName() {
-        return userName;
-    }
-
-    public List<Comment> getComments() {
-        return comments;
-    }
-
     public void setUserId(int userId) {
         this.userId = userId;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public void setComments(List<Comment> comments) {
-        this.comments = comments;
-    }
-
-    public void setReviewedBooks(List<Book> reviewedBooks) {
-        this.reviewedBooks = reviewedBooks;
     }
 }

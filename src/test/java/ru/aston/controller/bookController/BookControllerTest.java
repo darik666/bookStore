@@ -22,9 +22,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.verify;
 
+/**
+ * Test class for the BookController class, which handles HTTP requests related to books.
+ */
 @ExtendWith(MockitoExtension.class)
 public class BookControllerTest {
-
     @Mock
     private HttpServletRequest mockRequest;
 
@@ -36,14 +38,21 @@ public class BookControllerTest {
 
     private BookController bookController;
 
+    /**
+     * Sets up the test environment before each test method is run.
+     */
     @BeforeEach
     public void setUp() {
         bookController = new BookController(mockBookServiceImpl);
     }
 
+    /**
+     * Tests the doPost method for creating a valid book.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoPost_ValidBook() throws Exception {
-        // Arrange
         BookShortDto bookShortDto = new BookShortDto();
         bookShortDto.setBookId(1);
         bookShortDto.setBookTitle("Scary fog");
@@ -55,97 +64,104 @@ public class BookControllerTest {
 
         when(mockRequest.getReader()).thenReturn(reader);
         when(mockResponse.getWriter()).thenReturn(writer);
-        when(mockBookServiceImpl.createBook(any())).thenReturn(bookShortDto); // Assume createBook returns true for valid book
+        when(mockBookServiceImpl.createBook(any())).thenReturn(bookShortDto);
 
-        // Act
         bookController.doPost(mockRequest, mockResponse);
 
-        // Assert
         verify(mockRequest).getReader();
         verify(mockBookServiceImpl).createBook(any());
         verify(mockResponse).setContentType("application/json");
-        // Add more assertions based on your response
     }
 
+    /**
+     * Tests the doPost method for handling an invalid book creation request.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoPost_InvalidBook() throws Exception {
-        // Arrange
         String requestBody = "{\"bookTitle\": \"\", \"authorId\": 1}";
         BufferedReader reader = new BufferedReader(new StringReader(requestBody));
 
         when(mockRequest.getReader()).thenReturn(reader);
 
-        // Act
         bookController.doPost(mockRequest, mockResponse);
 
-        // Assert
         verify(mockRequest).getReader();
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST,
                 "Book must have non-null bookTitle and positive authorId");
-        // Verify that no interaction with the bookService occurred
         verifyNoInteractions(mockBookServiceImpl);
-        // Add more assertions based on your response
     }
 
+    /**
+     * Tests the doPost method for handling an invalid request body.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoPost_InvalidRequestBody() throws Exception {
-        // Arrange
-        String requestBody = ""; // Invalid request body
+        String requestBody = "";
         BufferedReader reader = new BufferedReader(new StringReader(requestBody));
 
         when(mockRequest.getReader()).thenReturn(reader);
 
-        // Act
         bookController.doPost(mockRequest, mockResponse);
 
-        // Assert
         verify(mockRequest).getReader();
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
-        // Verify that no interaction with the bookService occurred
         verifyNoInteractions(mockBookServiceImpl);
-        // Add more assertions based on your response
     }
 
+    /**
+     * Tests the doDelete method for deleting a valid book.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoDelete_ValidBook() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/123");
 
-        // Act
         bookController.doDelete(mockRequest, mockResponse);
 
-        // Assert
-        verify(mockBookServiceImpl).deleteBook(123); // Ensure deleteBook is called with correct book ID
+        verify(mockBookServiceImpl).deleteBook(123);
         verify(mockResponse).setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 
+    /**
+     * Tests the doDelete method for handling an invalid URL.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoDelete_InvalidURL() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/invalid");
 
-        // Act
         bookController.doDelete(mockRequest, mockResponse);
 
-        // Assert
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
     }
 
+    /**
+     * Tests the doGet method for handling an invalid URL.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoGet_InvalidURL() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/invalid");
 
-        // Act
         bookController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
     }
 
+    /**
+     * Tests the doGet method for retrieving all books.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoGet_GetAllBooks() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/");
         PrintWriter writer = new PrintWriter(new StringWriter());
         when(mockResponse.getWriter()).thenReturn(writer);
@@ -155,18 +171,19 @@ public class BookControllerTest {
         bookList.add(new BookDto());
         when(mockBookServiceImpl.getAllBooks()).thenReturn(bookList);
 
-        // Act
         bookController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockBookServiceImpl).getAllBooks();
         verify(mockResponse).setContentType("application/json");
-        // Add more assertions based on the response content
     }
 
+    /**
+     * Tests the doGet method for retrieving a book by ID.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoGet_GetBookById() throws Exception {
-        // Arrange
         int bookId = 123;
         when(mockRequest.getPathInfo()).thenReturn("/" + bookId);
         PrintWriter writer = new PrintWriter(new StringWriter());
@@ -175,27 +192,26 @@ public class BookControllerTest {
         BookDto book = new BookDto();
         when(mockBookServiceImpl.getBookById(bookId)).thenReturn(book);
 
-        // Act
         bookController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockBookServiceImpl).getBookById(bookId);
         verify(mockResponse).setContentType("application/json");
-        // Add more assertions based on the response content
     }
 
+    /**
+     * Tests the doGet method for handling a book not found scenario.
+     *
+     * @throws Exception if an error occurs during the test
+     */
     @Test
     public void testDoGet_bookNotFound() throws Exception {
-        // Arrange
         int bookId = 123;
         when(mockRequest.getPathInfo()).thenReturn("/" + bookId);
 
         when(mockBookServiceImpl.getBookById(bookId)).thenReturn(null);
 
-        // Act
         bookController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockBookServiceImpl).getBookById(bookId);
         verify(mockResponse).sendError(HttpServletResponse.SC_NOT_FOUND, "Book not found");
     }

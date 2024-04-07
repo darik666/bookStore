@@ -21,7 +21,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.verify;
 
-
+/**
+ * Test class for the AuthorController class, which handles HTTP requests related to authors.
+ */
 @ExtendWith(MockitoExtension.class)
 public class AuthorControllerTest {
     @Mock
@@ -35,14 +37,20 @@ public class AuthorControllerTest {
 
     private AuthorController authorController;
 
+    /**
+     * Set up the test environment before each test case.
+     */
     @BeforeEach
     public void setUp() {
         authorController = new AuthorController(mockAuthorServiceImpl);
     }
 
+    /**
+     * Tests the doPost method with a valid author.
+     * @throws Exception if an exception occurs during test execution
+     */
     @Test
     public void testDoPost_ValidAuthor() throws Exception {
-        // Arrange
         AuthorDto authorDto = new AuthorDto();
         authorDto.setAuthorId(1);
         authorDto.setAuthorName("Steven King");
@@ -53,100 +61,98 @@ public class AuthorControllerTest {
 
         when(mockRequest.getReader()).thenReturn(reader);
         when(mockResponse.getWriter()).thenReturn(writer);
-        when(mockAuthorServiceImpl.createAuthor(any())).thenReturn(authorDto); // Assume createAuthor returns true for valid author
+        when(mockAuthorServiceImpl.createAuthor(any())).thenReturn(authorDto);
 
-        // Act
         authorController.doPost(mockRequest, mockResponse);
 
-        // Assert
         verify(mockRequest).getReader();
         verify(mockAuthorServiceImpl).createAuthor(any());
         verify(mockResponse).setContentType("application/json");
-        // Add more assertions based on your response
     }
 
+    /**
+     * Tests the doPost method with an invalid author.
+     * @throws Exception if an exception occurs during test execution
+     */
     @Test
     public void testDoPost_InvalidAuthor() throws Exception {
-        // Arrange
-        String requestBody = "{\"authorName\": \"\"}"; // Invalid request body
+        String requestBody = "{\"authorName\": \"\"}";
         BufferedReader reader = new BufferedReader(new StringReader(requestBody));
 
         when(mockRequest.getReader()).thenReturn(reader);
 
-        // Act
         authorController.doPost(mockRequest, mockResponse);
 
-        // Assert
         verify(mockRequest).getReader();
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST,
                 "Author must have a non-null and non-empty authorName");
-        // Verify that no interaction with the AuthorService occurred
         verifyNoInteractions(mockAuthorServiceImpl);
-        // Add more assertions based on your response
     }
 
+    /**
+     * Tests the doPost method with an invalid request body.
+     * @throws Exception if an exception occurs during test execution
+     */
     @Test
     public void testDoPost_InvalidRequestBody() throws Exception {
-        // Arrange
-        String requestBody = ""; // Invalid request body
+        String requestBody = "";
         BufferedReader reader = new BufferedReader(new StringReader(requestBody));
 
         when(mockRequest.getReader()).thenReturn(reader);
 
-        // Act
         authorController.doPost(mockRequest, mockResponse);
 
-        // Assert
         verify(mockRequest).getReader();
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
-        // Verify that no interaction with the AuthorService occurred
         verifyNoInteractions(mockAuthorServiceImpl);
-        // Add more assertions based on your response
     }
 
+    /**
+     * Tests the doDelete method with a valid author.
+     * @throws Exception if an exception occurs during test execution
+     */
     @Test
     public void testDoDelete_ValidAuthor() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/123");
-        PrintWriter writer = new PrintWriter(new StringWriter());
 
-        // Act
         authorController.doDelete(mockRequest, mockResponse);
 
-        // Assert
-        verify(mockAuthorServiceImpl).deleteAuthor(123); // Ensure deleteAuthor is called with correct author ID
+        verify(mockAuthorServiceImpl).deleteAuthor(123);
         verify(mockResponse).setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 
+    /**
+     * Tests the doDelete method with an invalid URL.
+     * @throws Exception if an exception occurs during test execution
+     */
     @Test
     public void testDoDelete_InvalidURL() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/invalid");
-        PrintWriter writer = new PrintWriter(new StringWriter());
 
-        // Act
         authorController.doDelete(mockRequest, mockResponse);
 
-        // Assert
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
     }
 
+    /**
+     * Tests the doGet method with an invalid URL.
+     * @throws Exception if an exception occurs during test execution
+     */
     @Test
     public void testDoGet_InvalidURL() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/invalid");
-        PrintWriter writer = new PrintWriter(new StringWriter());
 
-        // Act
         authorController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockResponse).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid URL");
     }
 
+    /**
+     * Tests the doGet method to get all authors.
+     * @throws Exception if an exception occurs during test execution
+     */
     @Test
     public void testDoGet_GetAllUsers() throws Exception {
-        // Arrange
         when(mockRequest.getPathInfo()).thenReturn("/");
         PrintWriter writer = new PrintWriter(new StringWriter());
         when(mockResponse.getWriter()).thenReturn(writer);
@@ -156,18 +162,18 @@ public class AuthorControllerTest {
         authorList.add(new AuthorDto());
         when(mockAuthorServiceImpl.getAllAuthors()).thenReturn(authorList);
 
-        // Act
         authorController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockAuthorServiceImpl).getAllAuthors();
         verify(mockResponse).setContentType("application/json");
-        // Add more assertions based on the response content
     }
 
+    /**
+     * Tests the doGet method to get an author by ID.
+     * @throws Exception if an exception occurs during test execution
+     */
     @Test
     public void testDoGet_GetAuthorById() throws Exception {
-        // Arrange
         int authorId = 123;
         when(mockRequest.getPathInfo()).thenReturn("/" + authorId);
         PrintWriter writer = new PrintWriter(new StringWriter());
@@ -176,30 +182,26 @@ public class AuthorControllerTest {
         AuthorDto author = new AuthorDto();
         when(mockAuthorServiceImpl.getAuthorById(authorId)).thenReturn(author);
 
-        // Act
         authorController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockAuthorServiceImpl).getAuthorById(authorId);
         verify(mockResponse).setContentType("application/json");
-        // Add more assertions based on the response content
     }
 
+    /**
+     * Tests the doGet method when the requested author is not found.
+     * @throws Exception if an exception occurs during test execution
+     */
     @Test
     public void testDoGet_AuthorNotFound() throws Exception {
-        // Arrange
         int authorId = 123;
         when(mockRequest.getPathInfo()).thenReturn("/" + authorId);
-        PrintWriter writer = new PrintWriter(new StringWriter());
 
         when(mockAuthorServiceImpl.getAuthorById(authorId)).thenReturn(null);
 
-        // Act
         authorController.doGet(mockRequest, mockResponse);
 
-        // Assert
         verify(mockAuthorServiceImpl).getAuthorById(authorId);
         verify(mockResponse).sendError(HttpServletResponse.SC_NOT_FOUND, "Author not found");
     }
-
 }

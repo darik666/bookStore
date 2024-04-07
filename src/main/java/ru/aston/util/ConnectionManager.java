@@ -7,14 +7,26 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+/**
+ * Manages database connections and provides a data source for accessing the database.
+ */
 public class ConnectionManager {
+    /**
+     * The name of the properties file containing database connection configuration.
+     */
     private static final String PROPERTIES_FILE = "db.properties";
 
+    /**
+     * Retrieves a data source configured with database connection properties.
+     *
+     * @return Configured data source.
+     */
     public static DataSource getDataSource() {
         BasicDataSource dataSource = new BasicDataSource();
         Properties properties = new Properties();
 
-        try (InputStream inputStream = ConnectionManager.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE)) {
+        try (InputStream inputStream =
+                     ConnectionManager.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE)) {
             if (inputStream == null) {
                 throw new IOException("Properties file '" + PROPERTIES_FILE + "' not found");
             }
@@ -30,7 +42,7 @@ public class ConnectionManager {
         dataSource.setUrl(jdbcUrl);
         dataSource.setUsername(username);
         dataSource.setPassword(password);
-        dataSource.setDriverClassName("org.postgresql.Driver"); // Set the JDBC driver class name
+        dataSource.setDriverClassName("org.postgresql.Driver");
 
         return dataSource;
     }

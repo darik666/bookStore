@@ -7,6 +7,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Class defines the properties and behavior of a user short
+ * DTO object to return for client
+ */
 @Getter
 @Setter
 @NoArgsConstructor

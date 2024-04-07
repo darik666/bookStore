@@ -1,15 +1,16 @@
 package ru.aston.dto.AuthorDto;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.aston.dto.BookDto.BookDto;
-import ru.aston.model.Book.Book;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Class defines the properties and behavior of an author DTO object.
+ */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -36,9 +37,5 @@ public class AuthorDto {
 
     public List<BookDto> getBooks() {
         return books;
-    }
-
-    public void setBooks(List<BookDto> books) {
-        this.books = books;
     }
 }
